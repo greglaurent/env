@@ -3,9 +3,12 @@
 # VARS
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 RUN="$(find ${DIR}/runs -mindepth 1 -maxdepth 1 -executable)"
+
 declare -a EXEC_ARR
+source "${DIR}"/envs
 
 # ARGS
+env=""
 grep=""
 dry_run=false
 
@@ -51,8 +54,8 @@ filter() {
       continue
     fi
 
+    log "found" "${r}"
     if ! is_dry; then
-      log "found" "${r}"
       #log "${r}" &&
       EXEC_ARR+=("${r}")
     fi
@@ -61,14 +64,22 @@ filter() {
 
 exec() {
   for i in ${EXEC_ARR[@]}; do
-    log "${r}" &&
-      $r
+    log "${i}" &&
+      $i
   done
 }
 
 # EXEC BLOCK
 while [[ $# -gt 0 ]]; do
   case "${1}" in
+  "base")
+    env="base"
+    grep="${BASE[@]}"
+    ;;
+  "ix")
+    env="ix"
+    grep="${IX[@]}"
+    ;;
   "--dry")
     dry_run=true
     ;;
@@ -80,6 +91,6 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-filter "${RUN}" "${grep}"
+filter "${RUN}" "${grep// /\\|}"
 
 exec

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+BASE=("neovim")
+
+IX+="${BASE}"
+IX+=("ix")
