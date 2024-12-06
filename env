@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+# VARS
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+RUN="$(find ${DIR}/runs -mindepth 1 -maxdepth 1 -executable)"
+declare -a EXEC_ARR
+
+# ARGS
+grep=""
+dry_run=false
+
+# UTILS
+is_dry() {
+  if [[ "${dry_run}" == true ]]; then
+    return 0 #true
+  fi
+
+  return 1 #false
+}
+
+log() {
+  local arg="${1}"
+  local outer="${2:-$arg}"
+  local inner="RUN"
+  is_dry && inner="DRY"
+
+  case "${arg}" in
+  "arg")
+    inner="ARG"
+    ;;
+  "filter")
+    inner="FLT"
+    ;;
+  "skip")
+    inner="SKP"
+    ;;
+  "found")
+    inner="FND"
+    ;;
+  *) ;;
+  esac
+
+  echo "[${inner}]: ${outer}"
+}
+
+filter() {
+  log "filter" "${2}"
+  for r in $1; do
+    if echo "$r" | grep -vq "${2}"; then
+      log "skip" "${r}"
+      continue
+    fi
+
+    if ! is_dry; then
+      log "found" "${r}"
+      #log "${r}" &&
+      EXEC_ARR+=("${r}")
+    fi
+  done
+}
+
+exec() {
+  for i in ${EXEC_ARR[@]}; do
+    log "${r}" &&
+      $r
+  done
+}
+
+# EXEC BLOCK
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+  "--dry")
+    dry_run=true
+    ;;
+  *)
+    grep="${1}"
+    ;;
+  esac
+  log "arg" "${1}"
+  shift
+done
+
+filter "${RUN}" "${grep}"
+
+exec
